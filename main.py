@@ -1,8 +1,8 @@
 from datetime import datetime as dt
-import pytz
 from importlib import import_module
-import aoc_util
 from pprint import pprint
+import pytz
+import aoc_util
 
 
 def current_day():
@@ -38,4 +38,4 @@ def main(
 
 
 if __name__ == "__main__":
-    x = main()
+    x = main(4)
