@@ -1,17 +1,17 @@
-from datetime import datetime as dt
+from datetime import datetime
 from importlib import import_module
 from pprint import pprint
-import pytz
+from pytz import timezone
 import aoc_util
 
 
-def current_day():
-    EST = pytz.timezone("America/New_York")
-    return dt.now(EST).day
+DT_NOW = datetime.now(timezone("America/New_York"))
+CURRENT_YEAR = DT_NOW.year
+CURRENT_DAY = DT_NOW.day
 
 
 def main(
-    n=min(current_day(), 25),
+    n=min(CURRENT_DAY, 25),
     time=False,
     n_trials=1000,
     print_solution=True,
@@ -19,7 +19,7 @@ def main(
 ):
     aoc = import_module(f"days.aoc{n:02}{file_variant}")
     fmt = getattr(aoc, "fmt_dict", {})
-    data = aoc_util.aoc_input(f"{n:02}.txt", **fmt)
+    data = aoc_util.aoc_input(n, **fmt)
 
     if time:
         t = aoc_util.time_to_string(n_trials, aoc.solve, data)
@@ -33,9 +33,8 @@ def main(
     solution = aoc.solve(data)
     if print_solution:
         pprint(solution)
-
     return solution
 
 
 if __name__ == "__main__":
-    x = main(4)
+    x = main()
