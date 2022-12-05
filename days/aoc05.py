@@ -1,5 +1,5 @@
 from copy import deepcopy
-from util import chunks, ints, lmap
+from util import chunks, ints
 
 
 fmt_dict = {
@@ -41,9 +41,8 @@ class CrateStack:
 def solve(data):
     stack1 = CrateStack.from_string(data[0])
     stack2 = deepcopy(stack1)
-    instructions = lmap(ints, data[1].split("\n"))
 
-    for instr in instructions:
+    for instr in map(ints, data[1].split("\n")):
         stack1.move(*instr)
         stack2.move(*instr, simultaneous=True)
 
