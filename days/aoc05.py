@@ -1,34 +1,50 @@
+from copy import deepcopy
 from util import chunks, ints, lmap
 
 
-fmt_dict = {"strip": False, "sep": "\n\n"}
+fmt_dict = {
+    "strip": False,
+    "sep": "\n\n",
+}
+
+
+class CrateStack:
+    def __init__(self, width):
+        self.__stack = tuple([] for _ in range(width))
+
+    @classmethod
+    def from_string(cls, msg):
+        lines = msg.split("\n")
+        stack = cls(ints(lines[-1])[-1])
+        for row in lines[-2::-1]:
+            for i, chunk in enumerate(chunks(row, 4)):
+                crate = chunk[1]
+                if crate.isalpha():
+                    stack.push(i, crate)
+        return stack
+
+    def push(self, index, value):
+        self.__stack[index].append(value)
+
+    def move(self, count, source, dest, simultaneous=False):
+        crates = self.__stack[source - 1][-count:]
+        del self.__stack[source - 1][-count:]
+        if not simultaneous:
+            crates = reversed(crates)
+        self.__stack[dest - 1].extend(crates)
+
+    @property
+    def message(self):
+        return "".join(col[-1] if col else "" for col in self.__stack)
 
 
 def solve(data):
-    stack = data[0].split("\n")[:-1]
-    STACK = [list() for _ in range(9)]
-    for line in reversed(stack):
-        for i, block in enumerate(chunks(line, 4)):
-            c = block[1]
-            if c.isalpha():
-                STACK[i].append(c)
-    orders = lmap(ints, data[1].split("\n"))
+    stack1 = CrateStack.from_string(data[0])
+    stack2 = deepcopy(stack1)
+    instructions = lmap(ints, data[1].split("\n"))
 
-    print(STACK)
-    for n, source, dest in orders:
-        print(f"Move {n} from {source} to {dest}")
-        # PART ONE
-        # for _ in range(n):
-        #     try:
-        #         x = STACK[source - 1].pop()
-        #         STACK[dest - 1].append(x)
-        #     except IndexError:
-        #         pass
+    for instr in instructions:
+        stack1.move(*instr)
+        stack2.move(*instr, simultaneous=True)
 
-        # PART TWO
-        x = STACK[source - 1][-n:]
-        del STACK[source - 1][-n:]
-        STACK[dest - 1].extend(x)
-        print(STACK)
-
-    return "".join(l[-1] if l else "" for l in STACK)
+    return stack1.message, stack2.message
