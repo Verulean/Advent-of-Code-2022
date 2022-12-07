@@ -31,7 +31,7 @@ def solve(data):
                         path.append(dirname)
             case ["$", "ls"]:
                 processing = True
-            case [a, b]:
+            case [a, _]:
                 if processing and a.isnumeric():
                     file_size = int(a)
                     for i in range(len(path)):
