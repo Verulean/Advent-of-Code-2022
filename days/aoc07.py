@@ -17,6 +17,7 @@ def parse_directories(directory_sizes, size_threshold, needed_space, total_space
 def solve(data):
     sizes = defaultdict(int)
     processed_files = defaultdict(set)
+    processing = False
     path = []
     for line in data:
         match line.split():
@@ -33,7 +34,7 @@ def solve(data):
                 processing = True
             case [a, b]:
                 if a.isnumeric():
-                    if b in processed_files[tuple(path)]:
+                    if not processing or b in processed_files[tuple(path)]:
                         continue
                     processed_files[tuple(path)].add(b)
                     file_size = int(a)
