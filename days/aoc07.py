@@ -1,10 +1,23 @@
 from collections import defaultdict
 
 
+def parse_directories(directory_sizes, size_threshold, total_space, needed_space):
+    small_dir_total = 0
+    best_freed_size = total_space
+    
+    minimum_size = directory_sizes[("/",)] + needed_space - total_space
+    for size in directory_sizes.values():
+        if size <= size_threshold:
+            small_dir_total += size
+        if minimum_size <= size < best_freed_size:
+            best_freed_size = size
+    return small_dir_total, best_freed_size
+        
+
 def solve(data):
     sizes = defaultdict(int)
-    processing = False
     path = []
+    processing = False
     for line in data:
         match line.split():
             case ["$", "cd", dirname]:
@@ -23,12 +36,4 @@ def solve(data):
                     file_size = int(a)
                     for i in range(len(path)):
                         sizes[tuple(path[: i + 1])] += file_size
-    ans1 = 0
-    ans2 = 7e7
-    needed_space = sizes[("/",)] - 4e7
-    for directory, size in sizes.items():
-        if size <= 100_000:
-            ans1 += size
-        if needed_space <= size < ans2:
-            ans2 = size
-    return ans1, ans2
+    return parse_directories(sizes, 100_000, 70_000_000, 30_000_000)
