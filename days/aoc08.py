@@ -8,9 +8,9 @@ def scan(vec, visible, viewing_distance):
         j = max(indices[elem:])
         if j < 0:
             visible[i] = 1
-            viewing_distance[i] = i
+            viewing_distance[i] *= i
         else:
-            viewing_distance[i] = i - j
+            viewing_distance[i] *= i - j
         indices[elem] = i
 
 
@@ -19,15 +19,12 @@ def solve(data):
     m, n = grid.shape
 
     V = np.zeros_like(grid)
-    L = np.zeros_like(grid)
-    R = np.zeros_like(grid)
-    U = np.zeros_like(grid)
-    D = np.zeros_like(grid)
+    S = np.ones_like(grid)
 
     for i in range(m):
-        scan(grid[i], V[i], L[i])
-        scan(grid[i, ::-1], V[i, ::-1], R[i, ::-1])
+        scan(grid[i], V[i], S[i])
+        scan(grid[i, ::-1], V[i, ::-1], S[i, ::-1])
     for j in range(n):
-        scan(grid[:, j], V[:, j], U[:, j])
-        scan(grid[::-1, j], V[::-1, j], D[::-1, j])
-    return V.sum(), (L * R * U * D).max()
+        scan(grid[:, j], V[:, j], S[:, j])
+        scan(grid[::-1, j], V[::-1, j], S[::-1, j])
+    return V.sum(), S.max()
