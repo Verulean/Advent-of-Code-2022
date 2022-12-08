@@ -19,10 +19,10 @@ def solve(data):
     m, n = grid.shape
 
     V = np.zeros_like(grid)
-    L = np.zeros_like(grid, dtype=int)
-    R = np.zeros_like(grid, dtype=int)
-    U = np.zeros_like(grid, dtype=int)
-    D = np.zeros_like(grid, dtype=int)
+    L = np.zeros_like(grid)
+    R = np.zeros_like(grid)
+    U = np.zeros_like(grid)
+    D = np.zeros_like(grid)
 
     for i in range(m):
         scan(grid[i], V[i], L[i])
