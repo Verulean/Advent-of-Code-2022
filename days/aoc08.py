@@ -2,58 +2,50 @@ from util import lmap
 import numpy as np
 
 
-def is_visible(grid, i, j):
-    v = grid[i, j]
-    m, n = grid.shape
-    if i in {0, m - 1} or j in {0, n - 1}:
-        return True
-    if max(grid[0:i, j]) < v:
-        return True
-    if max(grid[i + 1 : m, j]) < v:
-        return True
-    if max(grid[i, 0:j]) < v:
-        return True
-    if max(grid[i, j + 1 : n]) < v:
-        return True
-    return False
+class TreeGrid:
+    def __init__(self, grid):
+        self.__grid = np.array(grid)
+        m, n = self.__grid.shape
+        self.__m = m - 1
+        self.__n = n - 1
 
+    @staticmethod
+    def __scan(vec, index, max_index):
+        value = vec[index]
+        l = max(0, index - 1)
+        r = min(max_index, index + 1)
+        visible = 0
+        while True:
+            if vec[l] >= value:
+                break
+            if l == 0:
+                visible = True
+                break
+            l -= 1
+        while True:
+            if vec[r] >= value:
+                break
+            if r == max_index:
+                visible = True
+                break
+            r += 1
+        return index - l, r - index, visible
 
-def score(grid, i, j):
-    v = grid[i, j]
-    m, n = grid.shape
-    s1 = 0
-    for I in range(i - 1, -1, -1):
-        s1 += 1
-        if grid[I, j] >= v:
-            break
-    s2 = 0
-    for I in range(i + 1, m, 1):
-        s2 += 1
-        if grid[I, j] >= v:
-            break
-    s3 = 0
-    for J in range(j - 1, -1, -1):
-        s3 += 1
-        if grid[i, J] >= v:
-            break
-    s4 = 0
-    for J in range(j + 1, n, 1):
-        s4 += 1
-        if grid[i, J] >= v:
-            break
-    return s1 * s2 * s3 * s4
+    def __process_tree(self, i, j):
+        l, r, v1 = TreeGrid.__scan(self.__grid[i], j, self.__n)
+        u, d, v2 = TreeGrid.__scan(self.__grid[:, j], i, self.__m)
+        return v1 | v2, l * r * u * d
+
+    def solve(self):
+        ans1 = 2 * (self.__m + self.__n)
+        ans2 = 0
+        for i in range(1, self.__m):
+            for j in range(1, self.__n):
+                visible, score = self.__process_tree(i, j)
+                ans1 += visible
+                ans2 = max(ans2, score)
+        return ans1, ans2
 
 
 def solve(data):
-    grid = np.array([lmap(int, row) for row in data], dtype=int)
-
-    N = 0
-    S = 0
-    m, n = grid.shape
-    for i in range(m):
-        for j in range(n):
-            if is_visible(grid, i, j):
-                N += 1
-            S = max(S, score(grid, i, j))
-
-    return N, S
+    return TreeGrid([lmap(int, row) for row in data]).solve()
