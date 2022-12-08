@@ -2,50 +2,32 @@ from util import lmap
 import numpy as np
 
 
-class TreeGrid:
-    def __init__(self, grid):
-        self.__grid = np.array(grid)
-        m, n = self.__grid.shape
-        self.__m = m - 1
-        self.__n = n - 1
-
-    @staticmethod
-    def __scan(vec, index, max_index):
-        value = vec[index]
-        l = max(0, index - 1)
-        r = min(max_index, index + 1)
-        visible = 0
-        while True:
-            if vec[l] >= value:
-                break
-            if l == 0:
-                visible = True
-                break
-            l -= 1
-        while True:
-            if vec[r] >= value:
-                break
-            if r == max_index:
-                visible = True
-                break
-            r += 1
-        return index - l, r - index, visible
-
-    def __process_tree(self, i, j):
-        l, r, v1 = TreeGrid.__scan(self.__grid[i], j, self.__n)
-        u, d, v2 = TreeGrid.__scan(self.__grid[:, j], i, self.__m)
-        return v1 | v2, l * r * u * d
-
-    def solve(self):
-        ans1 = 2 * (self.__m + self.__n)
-        ans2 = 0
-        for i in range(1, self.__m):
-            for j in range(1, self.__n):
-                visible, score = self.__process_tree(i, j)
-                ans1 += visible
-                ans2 = max(ans2, score)
-        return ans1, ans2
+def scan(vec, visible, viewing_distance):
+    indices = [-1] * 10
+    for i, elem in enumerate(vec):
+        j = max(indices[elem:])
+        if j < 0:
+            visible[i] = 1
+            viewing_distance[i] = i
+        else:
+            viewing_distance[i] = i - j
+        indices[elem] = i
 
 
 def solve(data):
-    return TreeGrid([lmap(int, row) for row in data]).solve()
+    grid = np.array([lmap(int, row) for row in data], dtype=int)
+    m, n = grid.shape
+
+    V = np.zeros_like(grid)
+    L = np.zeros_like(grid, dtype=int)
+    R = np.zeros_like(grid, dtype=int)
+    U = np.zeros_like(grid, dtype=int)
+    D = np.zeros_like(grid, dtype=int)
+
+    for i in range(m):
+        scan(grid[i], V[i], L[i])
+        scan(grid[i, ::-1], V[i, ::-1], R[i, ::-1])
+    for j in range(n):
+        scan(grid[:, j], V[:, j], U[:, j])
+        scan(grid[::-1, j], V[::-1, j], D[::-1, j])
+    return V.sum(), (L * R * U * D).max()
