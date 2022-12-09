@@ -12,11 +12,10 @@ def sign(x):
 
 def trail(head, tail):
     di, dj = head[0] - tail[0], head[1] - tail[1]
-    if di == dj == 0:
+    if abs(di) <= 1 and abs(dj) <= 1:
         return False
-    if abs(di) > 1 or abs(dj) > 1:
-        tail[0] += sign(di)
-        tail[1] += sign(dj)
+    tail[0] += sign(di)
+    tail[1] += sign(dj)
     return True
 
 
