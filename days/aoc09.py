@@ -1,11 +1,8 @@
-import numpy as np
-
-
 DIRS = {
-    "U": np.array([0, 1]),
-    "D": np.array([0, -1]),
-    "L": np.array([-1, 0]),
-    "R": np.array([1, 0]),
+    "U": (0, 1),
+    "D": (0, -1),
+    "L": (-1, 0),
+    "R": (1, 0),
 }
 
 
@@ -14,7 +11,7 @@ def sign(x):
 
 
 def trail(head, tail):
-    di, dj = head - tail
+    di, dj = head[0] - tail[0], head[1] - tail[1]
     if di == dj == 0:
         return False
     if abs(di) > 1 or abs(dj) > 1:
@@ -24,14 +21,15 @@ def trail(head, tail):
 
 
 def solve(data):
-    knots = [np.zeros(2, dtype=int) for _ in range(10)]
+    knots = [[0, 0] for _ in range(10)]
     v1 = {(0, 0)}
     v2 = {(0, 0)}
     for line in data:
         d, l = line.split()
-        offset = DIRS[d]
+        di, dj = DIRS[d]
         for _ in range(int(l)):
-            knots[0] += offset
+            knots[0][0] += di
+            knots[0][1] += dj
             for i in range(9):
                 if not trail(knots[i], knots[i + 1]):
                     break
