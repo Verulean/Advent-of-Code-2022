@@ -6,7 +6,7 @@ def step(state, value=0):
     screen += (".", "#")[abs(j - x) <= 1]
     cycle += 1
     x += value
-    if cycle % 40 == 20:
+    if j == 18:
         sigsum += cycle * x
     return [cycle, x, sigsum, screen]
 
