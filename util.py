@@ -61,9 +61,31 @@ def ints(s, negatives=True):
     return lmap(int, re.findall(pattern, s))
 
 
+def try_int(s):
+    try:
+        return int(s)
+    except ValueError:
+        return s
+
+
+def split_ints(s):
+    return lmap(try_int, s.split())
+
+
 def floats(s, negatives=True):
     pattern = r"-?\d+(?:\.\d+)?" if negatives else r"\d+(?:\.\d+)?"
     return lmap(float, re.findall(pattern, s))
+
+
+def try_float(s):
+    try:
+        return float(s)
+    except ValueError:
+        return s
+
+
+def split_floats(s):
+    return lmap(try_float, s.split())
 
 
 def words(s):
@@ -96,7 +118,7 @@ def is_unique(l):
 
 
 def factors(n):
-    return [d for d in range(1, int(n ** 0.5) + 1) if n % d == 0]
+    return [d for d in range(1, int(n**0.5) + 1) if n % d == 0]
 
 
 def gcd(a, b):
@@ -119,3 +141,7 @@ def sha256(s):
     h = hashlib.sha256()
     h.update(s)
     return h.hexdigest()
+
+
+def grid_to_string(grid, sep=""):
+    return "\n".join(map(lambda seq: sep.join(map(str, seq)), grid))
