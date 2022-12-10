@@ -1,6 +1,5 @@
 from datetime import datetime
 from importlib import import_module
-from pprint import pprint
 from pytz import timezone
 import aoc_util
 
@@ -32,7 +31,11 @@ def main(
 
     solution = aoc.solve(data)
     if print_solution:
-        pprint(solution)
+        if isinstance(solution, tuple):
+            for part in solution:
+                print(part)
+        else:
+            print(solution)
     return solution
 
 
