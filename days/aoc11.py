@@ -1,46 +1,40 @@
-from collections import defaultdict
+from collections import defaultdict, deque
+from copy import deepcopy
 from util import ints
 
 
-def solve(data):
-    items = dict()
-    ops = dict()
-    divs = dict()
-    insp = defaultdict(int)
+fmt_dict = {"sep": "\n\n"}
 
-    monkeys = set()
 
-    monkey = None
-    for line in data:
-        if line.startswith("Monkey"):
-            monkey = int(line.split()[1][:-1])
-            monkeys.add(monkey)
-        elif "Starting items" in line:
-            items[monkey] = ints(line)
-        elif "Operation:" in line:
-            ops[monkey] = eval(f"lambda old: {line.split(' = ')[1]}")
-        elif "Test: divisible" in line:
-            n = ints(line)
-            divs[monkey] = n
-        elif "If true:" in line or "If false:" in line:
-            divs[monkey].extend(ints(line))
+def parse_monkey(m):
+    lines = m.split("\n")
+    monkey = [
+        deque(ints(lines[1])),
+        eval(f"lambda old: {lines[2].split(' = ')[1]}"),
+        *[ints(l)[0] for l in lines[3:]],
+    ]
+    return ints(lines[0])[0], monkey
 
-    D = 1
-    for x in divs.values():
-        D *= x[0]
 
-    monkeys = sorted(monkeys)
-    for _ in range(10000):  # range(20): # Part 1
-        for monkey in monkeys:
-            if not items[monkey]:
-                continue
-            d, tfunc, ffunc = divs[monkey]
-            while items[monkey]:
-                v = items[monkey].pop(0)
-                v = ops[monkey](v)
-                v = v % D  # v // 3 # Part 1
-                f = (tfunc, ffunc)[v % d != 0]
-                items[f].append(v)
-                insp[monkey] += 1
-    s = sorted(insp.values(), reverse=True)
+def run(monkeys, rounds, reduce):
+    inspections = defaultdict(int)
+    for _ in range(rounds):
+        for i, monkey in monkeys.items():
+            items, func, divisor, t, f = monkey
+            inspections[i] += len(items)
+            while items:
+                worry = reduce(func(items.popleft()))
+                monkeys[t if worry % divisor == 0 else f][0].append(worry)
+    s = sorted(inspections.values(), reverse=True)
     return s[0] * s[1]
+
+
+def solve(data):
+    monkeys = {n: monkey for n, monkey in map(parse_monkey, data)}
+    monkeys2 = deepcopy(monkeys)
+    D = 1
+    for monkey in monkeys.values():
+        D *= monkey[2]
+    return run(monkeys, 20, lambda x: x // 3), run(
+        monkeys2, 10_000, lambda x: x % D
+    )
