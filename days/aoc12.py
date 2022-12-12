@@ -15,50 +15,46 @@ class PriorityQueue(list):
         return heapq.heappush(self, value)
 
 
-def climb(grid, start, end, best=None):
+def dijkstra(
+    grid,
+    start,
+    end_condition,
+    adj_filter=lambda grid, node, adj: False,
+    cost_func=lambda grid, node, adj, cost: cost + 1,
+):
+    if getattr(end_condition, "__call__", None) is None:
+        END = end_condition
+        end_condition = lambda grid, node: node == END
     m, n = grid.shape
     q = PriorityQueue()
     q.push((0, start))
-    g = np.full_like(grid, -1)
+    g = np.full_like(grid, np.iinfo(grid.dtype).max)
     g[start] = 0
     while q:
         cost, node = q.pop()
-        if best is not None and cost > best:
-            continue
-        node = tuple(node)
-        if node == end:
-            return int(g[end])
+        if end_condition(grid, node):
+            return g[node]
         for adj in neighbors(*node):
-            if not (0 <= adj[0] < m and 0 <= adj[1] < n):
+            if not (0 <= adj[0] < m and 0 <= adj[1] < n) or adj_filter(
+                grid, node, adj
+            ):
                 continue
-            if grid[adj] - grid[node] > 1:
-                continue
-            if g[adj] == -1 or (cost + 1) < g[adj]:
-                g[adj] = cost + 1
-                q.push((cost + 1, adj))
-
-
-def process(c):
-    if c == "S":
-        return ordch("a")
-    elif c == "E":
-        return ordch("z")
-    return ordch(c)
+            new_cost = cost_func(grid, node, adj, cost)
+            if new_cost < g[adj]:
+                g[adj] = new_cost
+                q.push((new_cost, adj))
 
 
 def solve(data):
     grid = np.array(lmap(list, data))
-    GRID = np.array([lmap(process, row) for row in data])
     S = tuple(np.argwhere(grid == "S")[0])
     E = tuple(np.argwhere(grid == "E")[0])
-
-    a = climb(GRID, S, E)
-    M = None
-    for S in np.argwhere(GRID == 0):
-        x = climb(GRID, tuple(S), E, M)
-        if M is None:
-            M = x
-        elif x is not None:
-            M = min(M, x)
-
-    return a, M
+    grid[S] = "a"
+    grid[E] = "z"
+    grid = np.vectorize(ordch)(grid)
+    return (
+        dijkstra(grid, S, E, lambda g, n, a: g[a] - g[n] > 1),
+        dijkstra(
+            grid, E, lambda g, n: g[n] == 0, lambda g, n, a: g[n] - g[a] > 1
+        ),
+    )
