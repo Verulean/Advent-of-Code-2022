@@ -1,4 +1,6 @@
 import hashlib
+import heapq
+import numpy as np
 import re
 
 
@@ -38,6 +40,14 @@ class Neighbors:
 
     def __getitem__(self, pos):
         return self(*pos)
+
+
+class PriorityQueue(list):
+    def pop(self):
+        return heapq.heappop(self)
+
+    def push(self, value):
+        return heapq.heappush(self, value)
 
 
 def lmap(func, iterable):
@@ -143,5 +153,33 @@ def sha256(s):
     return h.hexdigest()
 
 
-def grid_to_string(grid, sep=""):
-    return "\n".join(map(lambda seq: sep.join(map(str, seq)), grid))
+def grid_to_string(grid, func=str, sep=""):
+    return "\n".join(map(lambda seq: sep.join(map(func, seq)), grid))
+
+
+def dijkstra(
+    grid,
+    start,
+    end_condition,
+    adj_filter=lambda grid, node, adj: False,
+    cost_func=lambda grid, node, adj, cost: cost + 1,
+):
+    if getattr(end_condition, "__call__", None) is None:
+        END = end_condition
+        end_condition = lambda grid, node: node == END
+    neighbors = Neighbors(0, *grid.shape)
+    q = PriorityQueue()
+    q.push((0, start))
+    g = np.full_like(grid, np.iinfo(grid.dtype).max)
+    g[start] = 0
+    while q:
+        cost, node = q.pop()
+        if end_condition(grid, node):
+            return g[node]
+        for adj in neighbors(*node):
+            if adj_filter(grid, node, adj):
+                continue
+            new_cost = cost_func(grid, node, adj, cost)
+            if new_cost < g[adj]:
+                g[adj] = new_cost
+                q.push((new_cost, adj))
