@@ -11,7 +11,5 @@ def solve(data):
     grid = np.vectorize(ordch)(grid)
     return (
         dijkstra(grid, S, E, lambda g, n, a: g[a] - g[n] > 1),
-        dijkstra(
-            grid, E, lambda g, n: g[n] == 0, lambda g, n, a: g[n] - g[a] > 1
-        ),
+        dijkstra(grid, E, lambda g, n: g[n] == 0, lambda g, n, a: g[n] - g[a] > 1),
     )
