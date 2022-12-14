@@ -17,9 +17,9 @@ def dump_sand(source, walls, max_y, floor=False):
                 if j == max_y:
                     reservoir.discard((i, j))
                     break
-            elif j == max_y:
+            elif j == max_y + 1:
                 moving = False
-
+                continue
             j += 1
             if (i, j) not in reservoir and (i, j) not in walls:
                 reservoir.discard((i, j - 1))
