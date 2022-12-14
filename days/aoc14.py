@@ -1,88 +1,74 @@
 from util import ints, lmap
-import numpy as np
 
 
 def parse(x):
-    return [tuple(ints(l)) for l in x.split(" -> ")]
+    return lmap(ints, x.split("->"))
 
 
-def indices(i, j, offset=0):
-    return i, j - 426 + offset
+def dump_sand(source, walls, max_y, floor=False):
+    si, sj = source
+    reservoir = {source}
 
+    i, j = source
+    moving = True
+    while True:
+        if moving:
+            if not floor:
+                if j == max_y:
+                    reservoir.discard((i, j))
+                    break
+            elif j == max_y:
+                moving = False
 
-def drop(grid):
-    if grid[0, 274] == 1:
-        return False
-    grid[0, 274] = 1
-    return True
+            j += 1
+            if (i, j) not in reservoir and (i, j) not in walls:
+                reservoir.discard((i, j - 1))
+                reservoir.add((i, j))
+            elif (i - 1, j) not in reservoir and (
+                i - 1,
+                j,
+            ) not in walls:
+                reservoir.discard((i, j - 1))
+                reservoir.add((i - 1, j))
+                i -= 1
+            elif (i + 1, j) not in reservoir and (
+                i + 1,
+                j,
+            ) not in walls:
+                reservoir.discard((i, j - 1))
+                reservoir.add((i + 1, j))
+                i += 1
+            else:
+                moving = False
+        elif source in reservoir:
+            break
+        else:
+            reservoir.add(source)
+            i, j = source
+            moving = True
+    return len(reservoir)
 
 
 def solve(data):
     data = lmap(parse, data)
-    x1, y1 = 10000, 10000
-    x2, y2 = 0, 0
+    sand_source = (500, 0)
 
+    walls = set()
+    max_y = 0
     for line in data:
-        for x, y in line:
-            x1 = min(x1, x)
-            x2 = max(x2, x)
-            y1 = min(y1, y)
-            y2 = max(y2, y)
-    print(x1, y1, x2, y2)
-    SOURCE = indices(0, 500, 200)
-    print(SOURCE)
-
-    # x 494 to 503
-    # y 4 to 9
-    grid = np.zeros((159, 81), dtype=int)
-    M, N = grid.shape
-    for line in data:
-        for (a, b), (c, d) in zip(line, line[1:]):
-            a, c = min(a, c), max(a, c)
-            b, d = min(b, d), max(b, d)
-            a, b = indices(b, a)
-            c, d = indices(d, c)
-            grid[a : c + 1, b : d + 1] = 2
-
-    grid = np.pad(grid, 200)
-    grid = grid[200:]
-    grid[M + 1, :] = 2
-
-    M, N = grid.shape
-
-    moving = True
-    drop(grid)
-    curr_pos = SOURCE
-    print(SOURCE)
-    while True:
-        if moving:
-            i, j = curr_pos
-            if i + 1 >= M:
-                break
-            if grid[i + 1, j] == 0:
-                grid[i, j] = 0
-                grid[i + 1, j] = 1
-                curr_pos = (i + 1, j)
-            elif j - 1 < 0 or grid[i + 1, j - 1] == 0:
-                if j - 1 < 0:
-                    grid[curr_pos] = 0
-                    break
-                grid[curr_pos] = 0
-                grid[i + 1, j - 1] = 1
-                curr_pos = (i + 1, j - 1)
-            elif j + 1 >= N or grid[i + 1, j + 1] == 0:
-                if j + 1 >= N:
-                    grid[curr_pos] = 0
-                    break
-                grid[curr_pos] = 0
-                grid[i + 1, j + 1] = 1
-                curr_pos = (i + 1, j + 1)
+        for (x1, y1), (x2, y2) in zip(line, line[1:]):
+            if x1 == x2:
+                if y1 > y2:
+                    y1, y2 = y2, y1
+                max_y = max(max_y, y2)
+                for y in range(y1, y2 + 1):
+                    walls.add((x1, y))
             else:
-                moving = False
-        else:
-            if drop(grid):
-                curr_pos = SOURCE
-                moving = True
-            else:
-                break
-    return np.count_nonzero(grid == 1)
+                if x1 > x2:
+                    x1, x2 = x2, x1
+                max_y = max(max_y, y1)
+                for x in range(x1, x2 + 1):
+                    walls.add((x, y1))
+    ans1 = dump_sand(sand_source, walls, max_y)
+    ans2 = dump_sand(sand_source, walls, max_y, floor=True)
+    return ans1, ans2
