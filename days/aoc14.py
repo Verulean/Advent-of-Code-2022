@@ -5,70 +5,64 @@ def parse(x):
     return lmap(ints, x.split("->"))
 
 
-def dump_sand(source, walls, max_y, floor=False):
-    si, sj = source
-    reservoir = {source}
+class RegolithReservoir:
+    def __init__(self, rocks, max_y, source, floor=False):
+        self.__rocks = rocks
+        self.__max_y = max_y
+        self.__source = source
+        self.__tiles = self.__rocks.copy()
+        self.floor = floor
 
-    i, j = source
-    moving = True
-    while True:
-        if moving:
-            if not floor:
-                if j == max_y:
-                    reservoir.discard((i, j))
+    def clear(self):
+        self.__tiles = self.__rocks.copy()
+
+    def __simulate_drop(self):
+        if self.__source in self.__tiles:
+            return False
+        x, y = self.__source
+        while True:
+            if not self.floor:
+                if y == self.__max_y:
                     break
-            elif j == max_y + 1:
-                moving = False
+            elif y == self.__max_y + 1:
+                self.__tiles.add((x, y))
+                return True
+            y += 1
+            if (x, y) not in self.__tiles:
                 continue
-            j += 1
-            if (i, j) not in reservoir and (i, j) not in walls:
-                reservoir.discard((i, j - 1))
-                reservoir.add((i, j))
-            elif (i - 1, j) not in reservoir and (
-                i - 1,
-                j,
-            ) not in walls:
-                reservoir.discard((i, j - 1))
-                reservoir.add((i - 1, j))
-                i -= 1
-            elif (i + 1, j) not in reservoir and (
-                i + 1,
-                j,
-            ) not in walls:
-                reservoir.discard((i, j - 1))
-                reservoir.add((i + 1, j))
-                i += 1
+            elif (x - 1, y) not in self.__tiles:
+                x -= 1
+                continue
+            elif (x + 1, y) not in self.__tiles:
+                x += 1
+                continue
             else:
-                moving = False
-        elif source in reservoir:
-            break
-        else:
-            reservoir.add(source)
-            i, j = source
-            moving = True
-    return len(reservoir)
+                self.__tiles.add((x, y - 1))
+                return True
+
+    def dump_sand(self):
+        while self.__simulate_drop():
+            pass
+        return len(self.__tiles) - len(self.__rocks)
 
 
 def solve(data):
     data = lmap(parse, data)
-    sand_source = (500, 0)
-
-    walls = set()
+    rocks = set()
     max_y = 0
     for line in data:
         for (x1, y1), (x2, y2) in zip(line, line[1:]):
-            if x1 == x2:
-                if y1 > y2:
-                    y1, y2 = y2, y1
-                max_y = max(max_y, y2)
-                for y in range(y1, y2 + 1):
-                    walls.add((x1, y))
-            else:
-                if x1 > x2:
-                    x1, x2 = x2, x1
-                max_y = max(max_y, y1)
-                for x in range(x1, x2 + 1):
-                    walls.add((x, y1))
-    ans1 = dump_sand(sand_source, walls, max_y)
-    ans2 = dump_sand(sand_source, walls, max_y, floor=True)
+            if x1 > x2:
+                x1, x2 = x2, x1
+            if y1 > y2:
+                y1, y2 = y2, y1
+            max_y = max(max_y, y2)
+            rocks.update(
+                (x, y) for x in range(x1, x2 + 1) for y in range(y1, y2 + 1)
+            )
+    r = RegolithReservoir(rocks, max_y, (500, 0))
+    ans1 = r.dump_sand()
+    r.clear()
+    r.floor = True
+    ans2 = r.dump_sand()
     return ans1, ans2
