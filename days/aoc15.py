@@ -59,6 +59,13 @@ class Ranges:
                 break
 
 
+def is_hidden(sensors, x, y):
+    for xs, ys, d in sensors:
+        if abs(xs - x) + abs(ys - y) <= d:
+            return False
+    return True
+
+
 def invalid_positions(sensors, beacons, y):
     r = Ranges()
     for a, b, c in sensors:
@@ -94,8 +101,10 @@ def find_beacon(sensors, lower_bound, upper_bound, score_func):
             if (
                 lower_bound <= x <= upper_bound
                 and lower_bound <= y <= upper_bound
+                and is_hidden(sensors, x, y)
             ):
                 return score_func(x, y)
+    
 
 
 def solve(data):
@@ -105,6 +114,7 @@ def solve(data):
         d = abs(xb - xs) + abs(yb - ys)
         sensors.append((xs, ys, d))
         beacons.add((xb, yb))
+
     return (
         invalid_positions(sensors, beacons, 2000000),
         find_beacon(sensors, 0, 4000000, lambda x, y: 4000000 * x + y),
