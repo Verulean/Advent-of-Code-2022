@@ -89,17 +89,18 @@ def solve(data, start_node="AA"):
     bests1 = defaultdict(lambda: defaultdict(int))
     check_paths(bests1, NODES, travel_time, flow_rates, [], "AA", 0, 30)
     ans1 = 0
-    for seq, pressure in bests1[max(bests1)].items():
+    for _, pressure in bests1[max(bests1)].items():
         ans1 = max(ans1, pressure)
 
     bests2 = defaultdict(lambda: defaultdict(int))
     check_paths(bests2, NODES, travel_time, flow_rates, [], "AA", 0, 26)
+    path_sets = {seq: set(seq) for seqs in bests2.values() for seq in seqs}
     ans2 = 0
     for n1, s1 in bests2.items():
         for n2, s2 in bests2.items():
             for seq1, p1 in s1.items():
-                S1 = set(seq1)
+                S1 = path_sets[seq1]
                 for seq2, p2 in s2.items():
-                    if not S1 & set(seq2):
+                    if not S1 & path_sets[seq2]:
                         ans2 = max(ans2, p1 + p2)
     return ans1, ans2
