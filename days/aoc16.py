@@ -4,108 +4,107 @@ import re
 fmt_dict = {"cast_type": lambda x: re.findall(r"[A-Z]{2}|\d+", x)}
 
 
-def total_pressure(travel_time, flow_rates, start, path, max_time):
-    p = 0
-    t = 0
-    flow = 0
-    curr = start
-    for node in path:
-        dt = travel_time[curr][node] + 1
-        p += flow * dt
-        flow += flow_rates[node]
-        t += dt
-        curr = node
-    if t < max_time:
-        p += flow * (max_time - t)
-    return p
+class VolcanoValves:
+    def __init__(self, travel_times, flow_rates, nodes, start_node, max_time):
+        self.__travel_times = travel_times
+        self.__flow_rates = flow_rates
+        self.__nodes = nodes
+        self.__start = start_node
+        self.__max_time = max_time
+        self.reset()
+
+    def reset(self, max_time=None):
+        self.__best_pressures = defaultdict(lambda: defaultdict(int))
+        self.__path_sets = dict()
+        if max_time is not None:
+            self.__max_time = max_time
+
+    def __total_pressure(self, path):
+        pressure = 0
+        t = 0
+        flow = 0
+        curr = self.__start
+        for node in path:
+            dt = self.__travel_times[curr][node] + 1
+            pressure += flow * dt
+            flow += self.__flow_rates[node]
+            t += dt
+            curr = node
+        pressure += flow * (self.__max_time - t)
+        return pressure
+
+    def __check_paths(self, visited, path, curr_node, curr_time=0):
+        for node in self.__nodes - visited:
+            t = self.__travel_times[curr_node][node] + 1
+            if curr_time + t > self.__max_time:
+                continue
+            new_visited = visited | {node}
+            n = len(new_visited)
+            k = tuple(sorted(new_visited))
+            new_path = path + [node]
+            self.__check_paths(new_visited, new_path, node, curr_time + t)
+            self.__best_pressures[n][k] = max(
+                self.__best_pressures[n][k], self.__total_pressure(new_path)
+            )
+            self.__path_sets[k] = new_visited
+
+    def check_paths(self):
+        self.__check_paths(set(), [], self.__start)
+
+    @property
+    def best_single_pressure(self):
+        return max(self.__best_pressures[max(self.__best_pressures)].values())
+
+    @property
+    def best_double_pressure(self):
+        ret = 0
+        for n1, s1 in self.__best_pressures.items():
+            for n2, s2 in self.__best_pressures.items():
+                for seq1, p1 in s1.items():
+                    set1 = self.__path_sets[seq1]
+                    for seq2, p2 in s2.items():
+                        if not set1 & self.__path_sets[seq2]:
+                            ret = max(ret, p1 + p2)
+        return ret
 
 
-def check_paths(
-    bests,
-    nodes,
-    travel_time,
-    flow_rates,
-    start,
-    path,
-    visited,
-    curr_node,
-    curr_time,
-    max_time,
-):
-    for node in nodes - visited:
-        t = travel_time[curr_node][node] + 1
-        if curr_time + t > max_time:
-            continue
-        new_visited = visited | {node}
-        n = len(new_visited)
-        k = tuple(sorted(new_visited))
-        new_path = path + [node]
-        check_paths(
-            bests,
-            nodes,
-            travel_time,
-            flow_rates,
-            start,
-            new_path,
-            new_visited,
-            node,
-            curr_time + t,
-            max_time,
-        )
-        bests[n][k] = max(
-            bests[n][k],
-            total_pressure(travel_time, flow_rates, start, new_path, max_time),
-        )
-
-
-def solve(data, start_node="AA"):
-    travel_time = defaultdict(dict)
+def process_data(data):
+    travel_times = defaultdict(dict)
     flow_rates = dict()
     for source, flow, *dests in data:
         for dest in dests:
-            travel_time[source][dest] = 1
+            travel_times[source][dest] = 1
         flow_rates[source] = int(flow)
 
     changed = True
     while changed:
         changed = False
-        for source, dests in travel_time.items():
+        for source, dests in travel_times.items():
             for dest, t1 in list(dests.items()):
-                for dest2, t2 in travel_time[dest].items():
-                    curr_time = travel_time[source].get(dest2, None)
+                for dest2, t2 in travel_times[dest].items():
+                    curr_time = travel_times[source].get(dest2, None)
                     new_time = t1 + t2
                     if curr_time is None or new_time < curr_time:
-                        travel_time[source][dest2] = new_time
+                        travel_times[source][dest2] = new_time
                         changed = True
-
-    for source, dests in travel_time.items():
-        travel_time[source] = {
+    for source, dests in travel_times.items():
+        travel_times[source] = {
             dest: flow
             for dest, flow in dests.items()
             if flow and dest != source
         }
 
-    NODES = {v for v, f in flow_rates.items() if f}
+    nodes = {v for v, f in flow_rates.items() if f}
 
-    bests1 = defaultdict(lambda: defaultdict(int))
-    check_paths(
-        bests1, NODES, travel_time, flow_rates, "AA", [], set(), "AA", 0, 30
-    )
-    ans1 = 0
-    for _, pressure in bests1[max(bests1)].items():
-        ans1 = max(ans1, pressure)
+    return travel_times, flow_rates, nodes
 
-    bests2 = defaultdict(lambda: defaultdict(int))
-    check_paths(
-        bests2, NODES, travel_time, flow_rates, "AA", [], set(), "AA", 0, 26
-    )
-    path_sets = {seq: set(seq) for seqs in bests2.values() for seq in seqs}
-    ans2 = 0
-    for n1, s1 in bests2.items():
-        for n2, s2 in bests2.items():
-            for seq1, p1 in s1.items():
-                S1 = path_sets[seq1]
-                for seq2, p2 in s2.items():
-                    if not S1 & path_sets[seq2]:
-                        ans2 = max(ans2, p1 + p2)
+
+def solve(data):
+    start_node = "AA"
+    v = VolcanoValves(*process_data(data), start_node, 30)
+    v.check_paths()
+    ans1 = v.best_single_pressure
+    v.reset(26)
+    v.check_paths()
+    ans2 = v.best_double_pressure
     return ans1, ans2
