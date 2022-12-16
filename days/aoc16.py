@@ -1,188 +1,111 @@
 from collections import defaultdict
-from copy import deepcopy
-from util import lmap
+import re
+
+fmt_dict = {"cast_type": lambda x: re.findall(r"[A-Z]{2}|\d+", x)}
 
 
-def parse(line):
-    line = (
-        line.replace("has flow rate=", "|")
-        .replace("; tunnel leads to valves", "|")
-        .replace("; tunnels lead to valves", "|")
-        .replace("; tunnel leads to valve", "|")
-        .replace("; tunnels lead to valve", "|")
-        .replace("Valve ", "")
-    )
-    source, flow, other = [x.strip() for x in line.split("|")]
-    others = other.split(", ")
-    return source, int(flow), others
+def total_pressure(travel_time, flow_rates, path, max_time):
+    p = 0
+    t = 0
+    flow = 0
+    curr = "AA"
+    for node in path:
+        dt = travel_time[curr][node] + 1
+        p += flow * dt
+        flow += flow_rates[node]
+        t += dt
+        curr = node
+    if t < max_time:
+        p += flow * (max_time - t)
+    return p
 
 
-oldsorted = sorted
-
-
-def sorted(x, **kwargs):
-    return tuple(oldsorted(x))
-
-
-def solve(data):
-    data = lmap(parse, data)
-    tunnels = dict()
-    flows = dict()
-    for s, f, o in data:
-        tunnels[s] = o
-        flows[s] = f
-
-    nav_time = defaultdict(dict)
-    for source, dests in tunnels.items():
-        for dest in dests:
-            nav_time[source][dest] = 1
-
-    old = None
-    while old != nav_time:
-        old = deepcopy(nav_time)
-        for source in tunnels:
-            for dest in list(nav_time[source]):
-                t = nav_time[source][dest]
-                for dest2, t2 in nav_time[dest].items():
-                    nav_time[source][dest2] = min(
-                        nav_time[source].get(dest2, 9999999999), t + t2
-                    )
-
-    for s, dests in nav_time.items():
-        for d in list(dests):
-            if flows[d] == 0:
-                del nav_time[s][d]
-
-    WANTED = {v for v, f in flows.items() if f}
-
-    def pressure(*seq):
-        p = 0
-        t = 0
-        flow = 0
-        curr = "AA"
-        for node in seq:
-            dt = nav_time[curr][node] + 1
-            p += flow * dt
-            flow += flows[node]
-            t += dt
-            curr = node
-        if t < 26:
-            p += flow * (26 - t)
-        return p
-
-    BEST_PRESSURES = defaultdict(lambda: defaultdict(int))
-    for a in WANTED:
-        ta = nav_time["AA"][a] + 1
-
-        for b in WANTED - {a}:
-            tb = nav_time[a][b] + 1
-            if ta + tb > 26:
-                continue
-            BEST_PRESSURES[2][sorted([a, b])] = max(
-                BEST_PRESSURES[2][sorted([a, b])], pressure(a, b)
+def check_paths(
+    bests,
+    path_sets,
+    nodes,
+    travel_time,
+    flow_rates,
+    path,
+    curr_node,
+    curr_time,
+    max_time,
+    min_length=0,
+):
+    visited = set(path)
+    for node in nodes - visited:
+        t = travel_time[curr_node][node] + 1
+        if curr_time + t > max_time:
+            continue
+        new_visited = visited | {node}
+        n = len(new_visited)
+        k = tuple(sorted(new_visited))
+        new_path = path + [node]
+        check_paths(
+            bests,
+            path_sets,
+            nodes,
+            travel_time,
+            flow_rates,
+            new_path,
+            node,
+            curr_time + t,
+            max_time,
+        )
+        if n >= min_length:
+            bests[n][k] = max(
+                bests[n][k],
+                total_pressure(travel_time, flow_rates, new_path, max_time),
             )
-            for c in WANTED - {a, b}:
-                tc = nav_time[b][c] + 1
-                if ta + tb + tc > 26:
-                    continue
-                BEST_PRESSURES[3][sorted([a, b, c])] = max(
-                    BEST_PRESSURES[3][sorted([a, b, c])], pressure(a, b, c)
-                )
-                for d in WANTED - {a, b, c}:
-                    td = nav_time[c][d] + 1
-                    if ta + tb + tc + td > 26:
-                        continue
-                    BEST_PRESSURES[4][sorted([a, b, c, d])] = max(
-                        BEST_PRESSURES[4][sorted([a, b, c, d])],
-                        pressure(a, b, c, d),
-                    )
-                    for e in WANTED - {a, b, c, d}:
-                        te = nav_time[d][e] + 1
-                        if ta + tb + tc + td + te > 26:
-                            continue
-
-                        BEST_PRESSURES[5][sorted([a, b, c, d, e])] = max(
-                            BEST_PRESSURES[5][sorted([a, b, c, d, e])],
-                            pressure(a, b, c, d, e),
-                        )
-                        for f in WANTED - {a, b, c, d, e}:
-                            tf = nav_time[e][f] + 1
-                            if ta + tb + tc + td + te + tf > 26:
-                                continue
-
-                            BEST_PRESSURES[6][
-                                sorted([a, b, c, d, e, f])
-                            ] = max(
-                                BEST_PRESSURES[6][sorted([a, b, c, d, e, f])],
-                                pressure(a, b, c, d, e, f),
-                            )
-                            for g in WANTED - {a, b, c, d, e, f}:
-                                tg = nav_time[f][g] + 1
-                                if ta + tb + tc + td + te + tf + tg > 26:
-                                    continue
-
-                                BEST_PRESSURES[7][
-                                    sorted([a, b, c, d, e, f, g])
-                                ] = max(
-                                    BEST_PRESSURES[7][
-                                        sorted([a, b, c, d, e, f, g])
-                                    ],
-                                    pressure(a, b, c, d, e, f, g),
-                                )
-                                for h in WANTED - {a, b, c, d, e, f, g}:
-                                    th = nav_time[g][h] + 1
-                                    if (
-                                        ta + tb + tc + td + te + tf + tg + th
-                                        > 26
-                                    ):
-                                        continue
-
-                                    BEST_PRESSURES[8][
-                                        sorted([a, b, c, d, e, f, g, h])
-                                    ] = max(
-                                        BEST_PRESSURES[8][
-                                            sorted([a, b, c, d, e, f, g, h])
-                                        ],
-                                        pressure(a, b, c, d, e, f, g, h),
-                                    )
-                                    for i in WANTED - {a, b, c, d, e, f, g, h}:
-                                        ti = nav_time[h][i] + 1
-                                        if (
-                                            ta
-                                            + tb
-                                            + tc
-                                            + td
-                                            + te
-                                            + tf
-                                            + tg
-                                            + th
-                                            + ti
-                                            > 26
-                                        ):
-                                            continue
-                                        BEST_PRESSURES[9][
-                                            sorted([a, b, c, d, e, f, g, h, i])
-                                        ] = max(
-                                            BEST_PRESSURES[9][
-                                                sorted(
-                                                    [a, b, c, d, e, f, g, h, i]
-                                                )
-                                            ],
-                                            pressure(
-                                                a, b, c, d, e, f, g, h, i
-                                            ),
-                                        )
-
-    b = 0
-    for l1 in BEST_PRESSURES:
-        for l2 in BEST_PRESSURES:
-            for seq1, p1 in BEST_PRESSURES[l1].items():
-                S1 = set(seq1)
-                for seq2, p2 in BEST_PRESSURES[l2].items():
-                    S2 = set(seq2)
-                    if not S1 & S2 and p1 + p2 > b:
-                        b = p1 + p2
-    return b
+            path_sets[k] = new_visited
 
 
-# 1673, 2343
+def solve(data, start_node="AA"):
+    travel_time = defaultdict(dict)
+    flow_rates = dict()
+    for source, flow, *dests in data:
+        for dest in dests:
+            travel_time[source][dest] = 1
+        flow_rates[source] = int(flow)
+
+    changed = True
+    while changed:
+        changed = False
+        for source, dests in travel_time.items():
+            for dest, t1 in list(dests.items()):
+                for dest2, t2 in travel_time[dest].items():
+                    curr_time = travel_time[source].get(dest2, None)
+                    new_time = t1 + t2
+                    if curr_time is None or new_time < curr_time:
+                        travel_time[source][dest2] = new_time
+                        changed = True
+
+    for source, dests in travel_time.items():
+        travel_time[source] = {
+            dest: flow
+            for dest, flow in dests.items()
+            if flow and dest != source
+        }
+
+    NODES = {v for v, f in flow_rates.items() if f}
+
+    foo = defaultdict(lambda: defaultdict(int))
+    check_paths(foo, {}, NODES, travel_time, flow_rates, [], "AA", 0, 30)
+    ans1 = 0
+    for seq, pressure in foo[max(foo)].items():
+        ans1 = max(ans1, pressure)
+
+    bests = defaultdict(lambda: defaultdict(int))
+    path_sets = {}
+    check_paths(
+        bests, path_sets, NODES, travel_time, flow_rates, [], "AA", 0, 26
+    )
+    ans2 = 0
+    for n1, s1 in bests.items():
+        for n2, s2 in bests.items():
+            for seq1, p1 in s1.items():
+                S1 = path_sets[seq1]
+                for seq2, p2 in s2.items():
+                    if not S1 & path_sets[seq2]:
+                        ans2 = max(ans2, p1 + p2)
+    return ans1, ans2
