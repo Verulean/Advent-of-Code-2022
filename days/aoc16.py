@@ -22,7 +22,6 @@ def total_pressure(travel_time, flow_rates, path, max_time):
 
 def check_paths(
     bests,
-    path_sets,
     nodes,
     travel_time,
     flow_rates,
@@ -43,7 +42,6 @@ def check_paths(
         new_path = path + [node]
         check_paths(
             bests,
-            path_sets,
             nodes,
             travel_time,
             flow_rates,
@@ -57,7 +55,6 @@ def check_paths(
                 bests[n][k],
                 total_pressure(travel_time, flow_rates, new_path, max_time),
             )
-            path_sets[k] = new_visited
 
 
 def solve(data, start_node="AA"):
@@ -89,23 +86,20 @@ def solve(data, start_node="AA"):
 
     NODES = {v for v, f in flow_rates.items() if f}
 
-    foo = defaultdict(lambda: defaultdict(int))
-    check_paths(foo, {}, NODES, travel_time, flow_rates, [], "AA", 0, 30)
+    bests1 = defaultdict(lambda: defaultdict(int))
+    check_paths(bests1, NODES, travel_time, flow_rates, [], "AA", 0, 30)
     ans1 = 0
-    for seq, pressure in foo[max(foo)].items():
+    for seq, pressure in bests1[max(bests1)].items():
         ans1 = max(ans1, pressure)
 
-    bests = defaultdict(lambda: defaultdict(int))
-    path_sets = {}
-    check_paths(
-        bests, path_sets, NODES, travel_time, flow_rates, [], "AA", 0, 26
-    )
+    bests2 = defaultdict(lambda: defaultdict(int))
+    check_paths(bests2, NODES, travel_time, flow_rates, [], "AA", 0, 26)
     ans2 = 0
-    for n1, s1 in bests.items():
-        for n2, s2 in bests.items():
+    for n1, s1 in bests2.items():
+        for n2, s2 in bests2.items():
             for seq1, p1 in s1.items():
-                S1 = path_sets[seq1]
+                S1 = set(seq1)
                 for seq2, p2 in s2.items():
-                    if not S1 & path_sets[seq2]:
+                    if not S1 & set(seq2):
                         ans2 = max(ans2, p1 + p2)
     return ans1, ans2
