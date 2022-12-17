@@ -68,7 +68,7 @@ class Tetris:
                     for x in rock_counts
                 )
             seen[k] = r
-        return max_height + 1
+        return heights[r]
 
 
 def solve(data):
