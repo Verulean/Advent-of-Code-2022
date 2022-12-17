@@ -11,9 +11,7 @@ class Tetris:
     )
 
     def __init__(self, wind_pattern):
-        self.__wind = [1 if c == ">" else -1 for c in wind_pattern]
-        self.__wind_len = len(self.__wind)
-        self.__rock_len = len(self.__ROCKS)
+        self.__wind = tuple(1 if c == ">" else -1 for c in wind_pattern)
         self.__tiles = set()
 
     @staticmethod
@@ -33,20 +31,22 @@ class Tetris:
         return True
 
     def run(self, *rock_counts):
+        n_winds = len(self.__wind)
+        n_rocks = len(self.__ROCKS)
         windex = 0
         max_height = -1
         peaks = [0] * 7
         heights = {}
         seen = {}
         for r in range(max(rock_counts)):
-            rock_index = r % self.__rock_len
+            rock_index = r % n_rocks
             xs, ys, ps = self.__ROCKS[rock_index]
             dx, dy = 2, max_height + 4
             while True:
                 wind = self.__wind[windex]
                 if self.__can_move(xs, ys, dx + wind, dy):
                     dx += wind
-                windex = (windex + 1) % self.__wind_len
+                windex = (windex + 1) % n_winds
                 if self.__can_move(xs, ys, dx, dy - 1):
                     dy -= 1
                 else:
@@ -71,5 +71,4 @@ class Tetris:
 
 
 def solve(data):
-    t = Tetris(data)
-    return t.run(2022, 1_000_000_000_000)
+    return Tetris(data).run(2022, 1_000_000_000_000)
