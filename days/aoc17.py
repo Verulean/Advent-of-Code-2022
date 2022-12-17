@@ -29,13 +29,12 @@ class Tetris:
         return True
 
     def run(self, *rock_counts):
-        rock_counts = sorted(r - 1 for r in rock_counts)
         windex = 0
         max_height = -1
         peaks = [0] * 7
         heights = {}
         seen = {}
-        for r in range(rock_counts[-1] + 1):
+        for r in range(max(rock_counts)):
             rock_index = r % self.__rock_len
             xs, ys, ps = self.__ROCKS[rock_index]
             dx, dy = 2, max_height + 4
@@ -63,9 +62,9 @@ class Tetris:
                 l = r - j
                 h = heights[r] - heights[j]
                 return tuple(
-                    heights[x]
-                    if x <= r
-                    else Tetris.__get_height(heights, h, j, l, x)
+                    heights[x - 1]
+                    if x - 1 <= r
+                    else Tetris.__get_height(heights, h, j, l, x - 1)
                     for x in rock_counts
                 )
             seen[k] = r
