@@ -1,0 +1,77 @@
+fmt_dict = {"sep": None}
+
+
+class Tetris:
+    __ROCKS = (
+        ((0, 1, 2, 3), (0, 0, 0, 0), (0, 1, 2, 3)),
+        ((1, 0, 1, 2, 1), (0, 1, 1, 1, 2), (1, 3, 4)),
+        ((0, 1, 2, 2, 2), (0, 0, 0, 1, 2), (0, 1, 4)),
+        ((0, 0, 0, 0), (0, 1, 2, 3), (3,)),
+        ((0, 1, 0, 1), (0, 0, 1, 1), (2, 3)),
+    )
+
+    def __init__(self, wind_pattern):
+        self.__wind = [1 if c == ">" else -1 for c in wind_pattern]
+        self.__wind_len = len(self.__wind)
+        self.__rock_len = len(self.__ROCKS)
+        self.__tiles = set()
+
+    @staticmethod
+    def __get_height(heights, cycle_height, cycle_start, cycle_length, index):
+        q, r = divmod(index - cycle_start, cycle_length)
+        return heights[cycle_start + r] + q * cycle_height
+
+    def __can_move(self, xs, ys, dx=0, dy=0):
+        for x, y in zip(xs, ys):
+            xx, yy = x + dx, y + dy
+            if not 0 <= xx < 7 or yy < 0 or (xx, yy) in self.__tiles:
+                return False
+        return True
+
+    def run(self, *rock_counts):
+        rock_counts = sorted(r - 1 for r in rock_counts)
+        windex = 0
+        max_height = -1
+        peaks = [0] * 7
+        heights = {}
+        seen = {}
+        for r in range(rock_counts[-1] + 1):
+            rock_index = r % self.__rock_len
+            xs, ys, ps = self.__ROCKS[rock_index]
+            dx, dy = 2, max_height + 4
+            while True:
+                wind = self.__wind[windex]
+                if self.__can_move(xs, ys, dx + wind, dy):
+                    dx += wind
+                windex = (windex + 1) % self.__wind_len
+                if self.__can_move(xs, ys, dx, dy - 1):
+                    dy -= 1
+                else:
+                    for x, y in zip(xs, ys):
+                        self.__tiles.add((x + dx, y + dy))
+                    for i in ps:
+                        x, y = xs[i], ys[i]
+                        max_height = max(max_height, y + dy)
+                        peaks[x + dx] = max(peaks[x + dx], y + dy)
+                    break
+            heights[r] = max_height + 1
+
+            # Check if a cycle has been found
+            k = (tuple(p - max_height for p in peaks), windex, rock_index)
+            if k in seen:
+                j = seen[k]
+                l = r - j
+                h = heights[r] - heights[j]
+                return tuple(
+                    heights[x]
+                    if x <= r
+                    else Tetris.__get_height(heights, h, j, l, x)
+                    for x in rock_counts
+                )
+            seen[k] = r
+        return max_height + 1
+
+
+def solve(data):
+    t = Tetris(data)
+    return t.run(2022, 1_000_000_000_000)
