@@ -18,6 +18,8 @@ class Tetris:
 
     @staticmethod
     def __get_height(heights, cycle_start, cycle_end, index):
+        if index in heights:
+            return heights[index]
         cycle_length = cycle_end - cycle_start
         cycle_height = heights[cycle_end] - heights[cycle_start]
         q, r = divmod(index - cycle_start, cycle_length)
@@ -61,9 +63,7 @@ class Tetris:
             k = (tuple(p - max_height for p in peaks), windex, rock_index)
             if k in seen:
                 return tuple(
-                    heights[x - 1]
-                    if x - 1 <= r
-                    else Tetris.__get_height(heights, seen[k], r, x - 1)
+                    Tetris.__get_height(heights, seen[k], r, x - 1)
                     for x in rock_counts
                 )
             seen[k] = r
