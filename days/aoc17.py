@@ -17,7 +17,9 @@ class Tetris:
         self.__tiles = set()
 
     @staticmethod
-    def __get_height(heights, cycle_height, cycle_start, cycle_length, index):
+    def __get_height(heights, cycle_start, cycle_end, index):
+        cycle_length = cycle_end - cycle_start
+        cycle_height = heights[cycle_end] - heights[cycle_start]
         q, r = divmod(index - cycle_start, cycle_length)
         return heights[cycle_start + r] + q * cycle_height
 
@@ -58,13 +60,10 @@ class Tetris:
             # Check if a cycle has been found
             k = (tuple(p - max_height for p in peaks), windex, rock_index)
             if k in seen:
-                j = seen[k]
-                l = r - j
-                h = heights[r] - heights[j]
                 return tuple(
                     heights[x - 1]
                     if x - 1 <= r
-                    else Tetris.__get_height(heights, h, j, l, x - 1)
+                    else Tetris.__get_height(heights, seen[k], r, x - 1)
                     for x in rock_counts
                 )
             seen[k] = r
