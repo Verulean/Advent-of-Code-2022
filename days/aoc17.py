@@ -62,10 +62,11 @@ class Tetris:
             # Check if a cycle has been found
             k = (tuple(p - max_height for p in peaks), windex, rock_index)
             if k in seen:
-                return tuple(
+                ret = tuple(
                     Tetris.__get_height(heights, seen[k], r, x - 1)
                     for x in rock_counts
                 )
+                return ret[0] if len(ret) == 1 else ret
             seen[k] = r
         return heights[r]
 
