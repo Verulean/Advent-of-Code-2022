@@ -31,9 +31,10 @@ def solve(data):
     q = {(xl, yl, zl)}
     done = set()
     while q:
-        i, j, k = q.pop()
-        if (i, j, k) in done:
+        e = q.pop()
+        if e in done:
             continue
+        i, j, k = e
         for other in (
             (i + 1, j, k),
             (i - 1, j, k),
@@ -48,6 +49,6 @@ def solve(data):
                 ans2 += 1
             else:
                 q.add(other)
-        done.add((i, j, k))
+        done.add(e)
 
     return ans1, ans2
