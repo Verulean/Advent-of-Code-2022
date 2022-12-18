@@ -8,20 +8,20 @@ def solve(data):
     cubes = set(map(tuple, data))
     ans1 = 0
     xl, yl, zl, xh, yh, zh = (0,) * 6
-    for a, b, c in cubes:
-        xl = min(xl, a)
-        xh = max(xh, a)
-        yl = min(yl, b)
-        yh = max(yh, b)
-        zl = min(zl, c)
-        zh = max(zh, c)
+    for i, j, k in cubes:
+        xl = min(xl, i)
+        xh = max(xh, i)
+        yl = min(yl, j)
+        yh = max(yh, j)
+        zl = min(zl, k)
+        zh = max(zh, k)
         for other in (
-            (a + 1, b, c),
-            (a - 1, b, c),
-            (a, b + 1, c),
-            (a, b - 1, c),
-            (a, b, c + 1),
-            (a, b, c - 1),
+            (i + 1, j, k),
+            (i - 1, j, k),
+            (i, j + 1, k),
+            (i, j - 1, k),
+            (i, j, k + 1),
+            (i, j, k - 1),
         ):
             if other not in cubes:
                 ans1 += 1
