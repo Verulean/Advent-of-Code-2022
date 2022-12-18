@@ -1,4 +1,3 @@
-from collections import deque
 from util import ints
 
 
@@ -29,7 +28,7 @@ def solve(data):
     xl, yl, zl, xh, yh, zh = xl - 1, yl - 1, zl - 1, xh + 1, yh + 1, zh + 1
 
     ans2 = 0
-    q = deque([(xl, yl, zl)])
+    q = {(xl, yl, zl)}
     done = set()
     while q:
         i, j, k = q.pop()
@@ -48,7 +47,7 @@ def solve(data):
             elif other in cubes:
                 ans2 += 1
             else:
-                q.append(other)
+                q.add(other)
         done.add((i, j, k))
 
     return ans1, ans2
