@@ -1,5 +1,6 @@
 from collections import deque
 
+
 fmt_dict = {"cast_type": int}
 
 
