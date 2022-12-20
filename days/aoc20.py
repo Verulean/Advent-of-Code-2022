@@ -24,12 +24,10 @@ class EncryptedList:
 
     @property
     def coordinates(self):
-        self.__q.rotate(-self.__q.index(self.__z))
-        ret = 0
-        for _ in range(3):
-            self.__q.rotate(-1000)
-            ret += self.__q[0][1]
-        return ret
+        iz = self.__q.index(self.__z)
+        return sum(
+            self.__q[(iz + i) % (self.__n + 1)][1] for i in (1000, 2000, 3000)
+        )
 
 
 def solve(data):
