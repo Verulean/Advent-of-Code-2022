@@ -1,64 +1,42 @@
 fmt_dict = {"cast_type": int}
 
 
-def score(right, ZERO):
-    ret = 0
-    node = ZERO
-    for _ in range(3):
-        for j in range(1000):
-            node = right[node]
-        ret += node[1]
-    return ret
+class EncryptedList:
+    def __init__(self, data, decryption_key=1):
+        self.__base_order = data.copy()
+        self.__z = (self.__base_order.index(0), 0)
+        self.__n = len(self.__base_order) - 1
+        self.reset(decryption_key)
+
+    def reset(self, decryption_key=1):
+        self.__order = [v * decryption_key for v in self.__base_order]
+        self.__q = deque(enumerate(self.__order))
+
+    def mix(self):
+        for node in enumerate(self.__order):
+            self.__q.rotate(-self.__q.index(node))
+            self.__q.popleft()
+            self.__q.rotate(-node[1] % self.__n)
+            self.__q.appendleft(node)
+
+    @property
+    def coordinates(self):
+        self.__q.rotate(-self.__q.index(self.__z))
+        ret = 0
+        for _ in range(3):
+            self.__q.rotate(-1000)
+            ret += self.__q[0][1]
+        return ret
 
 
-def mix(left, right, order, N):
-    for node in order:
-        i, v = node
-        if v == 0:
-            continue
-        l, r = left[node], right[node]
-        left[r] = l
-        right[l] = r
-        if v > 0:
-            next_node = right[node]
-            for _ in range((v - 1) % (N - 1)):
-                next_node = right[next_node]
-            nnext_node = right[next_node]
-            right[next_node] = node
-            left[node] = next_node
-            left[nnext_node] = node
-            right[node] = nnext_node
-        else:
-            next_node = left[node]
-            for _ in range((-v - 1) % (N - 1)):
-                next_node = left[next_node]
-            nnext_node = left[next_node]
-            left[next_node] = node
-            right[node] = next_node
-            right[nnext_node] = node
-            left[node] = nnext_node
+from collections import deque
 
 
 def solve(data):
-    decryption_key = 811589153
-    N = len(data)
-    data2 = [n * decryption_key for n in data]
-    l1, l2, r1, r2 = {}, {}, {}, {}
-    z1, z2 = None, None
-    for i, (v1, v2) in enumerate(zip(data, data2)):
-        l = (i - 1) % N
-        r = (i + 1) % N
-        l1[(i, v1)] = (l, data[l])
-        r1[(i, v1)] = (r, data[r])
-        l2[(i, v2)] = (l, data2[l])
-        r2[(i, v2)] = (r, data2[r])
-        if z1 is None and v1 == 0:
-            z1 = (i, v1)
-        if z2 is None and v2 == 0:
-            z2 = (i, v2)
-
-    mix(l1, r1, enumerate(data), N)
+    l = EncryptedList(data)
+    l.mix()
+    ans1 = l.coordinates
+    l.reset(811589153)
     for _ in range(10):
-        mix(l2, r2, enumerate(data2), N)
-
-    return score(r1, z1), score(r2, z2)
+        l.mix()
+    return ans1, l.coordinates
