@@ -1,3 +1,5 @@
+from collections import deque
+
 fmt_dict = {"cast_type": int}
 
 
@@ -27,9 +29,6 @@ class EncryptedList:
             self.__q.rotate(-1000)
             ret += self.__q[0][1]
         return ret
-
-
-from collections import deque
 
 
 def solve(data):
