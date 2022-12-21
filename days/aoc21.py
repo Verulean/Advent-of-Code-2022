@@ -1,52 +1,44 @@
-from z3 import Solver, Real
-
-
-def parse(line):
-    a, b = line.split(": ")
-    if b.isnumeric():
-        return a, int(b)
-    elif "+" in b:
-        return a, b.split(" + "), "+"
-    elif "-" in b:
-        return a, b.split(" - "), "-"
-    elif "*" in b:
-        return a, b.split(" * "), "*"
-    elif "/" in b:
-        return a, b.split(" / "), "/"
+from z3 import Real, Solver
 
 
 def solve(data):
+    s = Solver()
     monkeys = {}
-    VARS = {}
+    conds = []
+    p1_conds = []
+    p2_conds = []
+
+    def parse_condition(pieces):
+        return " ".join(
+            f"monkeys['{x}']" if x.isalpha() else x for x in pieces
+        )
+
     for line in data:
-        a, *b = parse(line)
-        if len(b) == 1:
-            monkeys[a] = b[0]
+        m, c = line.split(": ")
+        monkeys[m] = Real(m)
+        pieces = [m, "=="] + c.split()
+        if m == "root":
+            p1_conds.append(parse_condition(pieces))
+            pieces[3] = "-"
+            p2_conds.append(parse_condition(pieces))
+            p2_conds.append(parse_condition([m, "==", "0"]))
+        elif m == "humn":
+            p1_conds.append(parse_condition(pieces))
         else:
-            monkeys[a] = b
+            conds.append(parse_condition(pieces))
 
-    for m in monkeys:
-        VARS[m] = Real(m)
+    for c in conds:
+        s.add(eval(c))
+    s.push()
+    for c in p1_conds:
+        s.add(eval(c))
+    s.check()
+    ans1 = s.model().eval(monkeys["root"])
 
-    S = Solver()
-    for m, b in monkeys.items():
-        if m == "humn":
-            continue
-        if isinstance(b, int):
-            S.add(VARS[m] == b)
-        else:
-            (m1, m2), o = b
-            if m == "root":
-                S.add(VARS[m] == VARS[m1] - VARS[m2])
-            elif o == "+":
-                S.add(VARS[m] == VARS[m1] + VARS[m2])
-            elif o == "-":
-                S.add(VARS[m] == VARS[m1] - VARS[m2])
-            elif o == "*":
-                S.add(VARS[m] == VARS[m1] * VARS[m2])
-            elif o == "/":
-                S.add(VARS[m] == VARS[m1] / VARS[m2])
-    S.add(VARS["root"] == 0)
-    S.check()
-    ans = S.model()
-    return ans.eval(VARS["humn"])
+    s.pop()
+    for c in p2_conds:
+        s.add(eval(c))
+    s.check()
+    ans2 = s.model().eval(monkeys["humn"])
+
+    return ans1, ans2
