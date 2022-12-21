@@ -34,11 +34,11 @@ def solve(data):
     s.push()
     for c in p1_conds:
         s.add(c)
-    ans1 = s.model().eval(Real("root")) if s.check().r == 1 else None
+    ans1 = s.model()[Real("root")] if s.check().r == 1 else None
 
     s.pop()
     for c in p2_conds:
         s.add(c)
-    ans2 = s.model().eval(Real("humn")) if s.check().r == 1 else None
+    ans2 = s.model()[Real("humn")] if s.check().r == 1 else None
 
     return ans1, ans2
