@@ -54,16 +54,13 @@ class MonkeyMath:
 def binary_search(f, l=0, h=1024):
     while l < h:
         m = (l + h) // 2
-        fl = f(l)
-        fh = f(h)
-        fm = f(m)
         # root encountered
-        if fm == 0:
-            return m
-        elif fh == 0:
-            return h
-        elif fl == 0:
+        if (fl := f(l)) == 0:
             return l
+        elif (fm := f(m)) == 0:
+            return m
+        elif (fh := f(h)) == 0:
+            return h
         # restrict bounds
         elif fl * fm < 0:
             h = m
