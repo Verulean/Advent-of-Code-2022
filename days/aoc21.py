@@ -11,9 +11,8 @@ def solve(data):
 
     for line in data:
         name, condition = line.split(": ")
-        pieces = condition.split()
         monkey = Real(name)
-        match pieces:
+        match condition.split():
             case [n]:
                 cond = monkey == int(n)
                 if name == "humn":
