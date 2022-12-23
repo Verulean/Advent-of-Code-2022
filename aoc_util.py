@@ -1,3 +1,4 @@
+from importlib.util import module_from_spec, spec_from_file_location
 from main import CURRENT_YEAR
 from timeit import timeit
 import os
@@ -5,6 +6,18 @@ import requests
 
 
 CURRENT_WORKING_DIRECTORY = os.path.dirname(__file__)
+
+
+def aoc_import(day, file_suffix, days_dir="days"):
+    spec = spec_from_file_location(
+        f"aoc{day:02}",
+        os.path.join(
+            CURRENT_WORKING_DIRECTORY, days_dir, f"aoc{day:02}{file_suffix}.py"
+        ),
+    )
+    aoc = module_from_spec(spec)
+    spec.loader.exec_module(aoc)
+    return aoc
 
 
 def aoc_input(
@@ -21,7 +34,7 @@ def aoc_input(
             return f.read()
         return [
             cast_type(i.strip()) if strip else cast_type(i)
-            for i in f.read().split(sep=sep)
+            for i in f.read().split(sep)
         ]
 
 

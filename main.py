@@ -1,5 +1,4 @@
 from datetime import datetime
-from importlib import import_module
 from pytz import timezone
 import aoc_util
 
@@ -14,9 +13,9 @@ def main(
     time=False,
     n_trials=1000,
     print_solution=True,
-    file_variant="",
+    file_suffix="",
 ):
-    aoc = import_module(f"days.aoc{n:02}{file_variant}")
+    aoc = aoc_util.aoc_import(n, file_suffix)
     fmt = getattr(aoc, "fmt_dict", {})
     data = aoc_util.aoc_input(n, **fmt)
 
