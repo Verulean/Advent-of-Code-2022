@@ -55,28 +55,22 @@ class GameOfElf:
 
     def step(self):
         self.__step += 1
-        next_elves = set()
         proposals = defaultdict(set)
         for i, j in self.__elves:
             elf_indices = self.__elf_indices(i, j)
             if not elf_indices:
-                next_elves.add((i, j))
                 continue
             for indices, di, dj in self.__directions:
                 if not indices & elf_indices:
                     proposals[(i + di, j + dj)].add((i, j))
                     break
-            else:
-                next_elves.add((i, j))
         moved = False
         for next_pos, elves in proposals.items():
-            if len(elves) > 1:
-                next_elves.update(elves)
-            else:
-                next_elves.add(next_pos)
+            if len(elves) == 1:
+                self.__elves.add(next_pos)
+                self.__elves.difference_update(elves)
                 self.__update_extrema(*next_pos)
                 moved = True
-        self.__elves = next_elves
         self.__directions.rotate(-1)
         return moved
 
