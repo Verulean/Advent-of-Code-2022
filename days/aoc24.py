@@ -33,14 +33,10 @@ def solve(data):
         for c, arr in b.items():
             di, dj = moves[c]
             b[c] = {(bound(i + di, M), bound(j + dj, N)) for i, j in arr}
-        q = (
-            {(i + di, j + dj) for di, dj in m for i, j in q}
-            - w
-            - b["^"]
-            - b["v"]
-            - b[">"]
-            - b["<"]
-        )
+        q = {(i + di, j + dj) for di, dj in m for i, j in q}
+        q -= w
+        for d in b.values():
+            q -= d
         if goals[0] in q:
             q = {goals.pop(0)}
             times.append(t)
