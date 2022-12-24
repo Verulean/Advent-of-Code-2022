@@ -1,10 +1,6 @@
 from itertools import count
 
 
-def bound(x, N):
-    return (x - 1) % (N - 2) + 1
-
-
 def solve(data):
     moves = {
         "^": (-1, 0),
@@ -32,7 +28,10 @@ def solve(data):
     for t in count(1):
         for c, arr in b.items():
             di, dj = moves[c]
-            b[c] = {(bound(i + di, M), bound(j + dj, N)) for i, j in arr}
+            b[c] = {
+                ((i + di - 1) % (M - 2) + 1, (j + dj - 1) % (N - 2) + 1)
+                for i, j in arr
+            }
         q = {(i + di, j + dj) for di, dj in m for i, j in q}
         q -= w
         for d in b.values():
