@@ -1,6 +1,3 @@
-from itertools import count
-
-
 def solve(data):
     moves = {
         "^": (-2, -1),
@@ -25,7 +22,9 @@ def solve(data):
     dests = [E, S, E]
     times = []
     m = ((-1, 0), (0, 1), (1, 0), (0, -1), (0, 0))
-    for t in count(1):
+    t = 0
+    while q:
+        t += 1
         for c, arr in b.items():
             di, dj = moves[c]
             b[c] = {
@@ -40,4 +39,5 @@ def solve(data):
             q = {dests.pop(0)}
             times.append(t)
             if not dests:
-                return times[0], times[-1]
+                break
+    return times[0], times[-1]
