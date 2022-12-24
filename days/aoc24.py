@@ -8,20 +8,16 @@ def unit_sign(x):
 
 class Blizzards:
     def __init__(self, blizzards, bounds):
-        self.__max_t = 0
         self.__blizzards = {0: blizzards}
         self.__bounds = bounds
         self.__cycle = lcm(
             bounds[1] - bounds[0] + 1, bounds[3] - bounds[2] + 1
         )
+        for t in range(self.__cycle):
+            self.__blizzards[t + 1] = self.__step(self.__blizzards[t])
 
     def __getitem__(self, t):
-        t %= self.__cycle
-        if t > self.__max_t:
-            for T in range(self.__max_t, t + 1):
-                self.__blizzards[T + 1] = self.__step(self.__blizzards[T])
-            self.__max_t = t
-        return self.__blizzards[t]
+        return self.__blizzards[t % self.__cycle]
 
     def __bound(self, i, j):
         return (
@@ -58,15 +54,14 @@ class BlizzardBasin:
             state = q.popleft()
             i, j, t = state
             if (
-                not (0 <= i < self.__m and 0 <= j < self.__n)
+                state in seen
                 or (i, j) in self.__walls
-                or state in seen
+                or not (0 <= i < self.__m and 0 <= j < self.__n)
             ):
                 continue
             seen.add(state)
             if (i, j) == end_position:
                 return t
-
             for adj in (
                 (i + di, j),
                 (i, j + dj),
