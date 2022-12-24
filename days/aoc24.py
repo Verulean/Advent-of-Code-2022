@@ -1,3 +1,6 @@
+from itertools import count
+
+
 def bound(x, N):
     return (x - 1) % (N - 2) + 1
 
@@ -8,32 +11,30 @@ def solve(data):
         ">": (0, 1),
         "v": (1, 0),
         "<": (0, -1),
-        " ": (0, 0),
     }
     M, N = len(data), len(data[0])
     w = set()
-    b = {c: set() for c in ("^", ">", "v", "<")}
+    b = {c: set() for c in moves}
     for i, line in enumerate(data):
         for j, c in enumerate(line):
             pos = (i, j)
-            if c == "#":
-                w.add(pos)
-            elif c in b:
+            if c in b:
                 b[c].add(pos)
+            elif c == "#":
+                w.add(pos)
     S = (0, data[0].index("."))
     E = (M - 1, data[-1].index("."))
     w |= {(-1, S[1]), (M, E[1])}
-    t = 0
     q = {S}
     goals = [E, S, E]
     times = []
-    while q:
-        t += 1
+    m = ((-1, 0), (0, 1), (1, 0), (0, -1), (0, 0))
+    for t in count(1):
         for c, arr in b.items():
             di, dj = moves[c]
             b[c] = {(bound(i + di, M), bound(j + dj, N)) for i, j in arr}
         q = (
-            {(i + di, j + dj) for di, dj in moves.values() for i, j in q}
+            {(i + di, j + dj) for di, dj in m for i, j in q}
             - w
             - b["^"]
             - b["v"]
