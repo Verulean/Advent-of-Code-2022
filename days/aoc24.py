@@ -3,10 +3,10 @@ from itertools import count
 
 def solve(data):
     moves = {
-        "^": (-1, 0),
-        ">": (0, 1),
-        "v": (1, 0),
-        "<": (0, -1),
+        "^": (-2, -1),
+        ">": (-1, 0),
+        "v": (0, -1),
+        "<": (-1, -2),
     }
     M, N = len(data), len(data[0])
     w = set()
@@ -22,22 +22,22 @@ def solve(data):
     E = (M - 1, data[-1].index("."))
     w |= {(-1, S[1]), (M, E[1])}
     q = {S}
-    goals = [E, S, E]
+    dests = [E, S, E]
     times = []
     m = ((-1, 0), (0, 1), (1, 0), (0, -1), (0, 0))
     for t in count(1):
         for c, arr in b.items():
             di, dj = moves[c]
             b[c] = {
-                ((i + di - 1) % (M - 2) + 1, (j + dj - 1) % (N - 2) + 1)
+                ((i + di) % (M - 2) + 1, (j + dj) % (N - 2) + 1)
                 for i, j in arr
             }
         q = {(i + di, j + dj) for di, dj in m for i, j in q}
         q -= w
         for d in b.values():
             q -= d
-        if goals[0] in q:
-            q = {goals.pop(0)}
+        if dests[0] in q:
+            q = {dests.pop(0)}
             times.append(t)
-            if not goals:
+            if not dests:
                 return times[0], times[-1]
