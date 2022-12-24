@@ -1,4 +1,5 @@
 from collections import defaultdict, deque
+from util import lcm
 
 
 def unit_sign(x):
@@ -10,8 +11,12 @@ class Blizzards:
         self.__max_t = 0
         self.__blizzards = {0: blizzards}
         self.__bounds = bounds
+        self.__cycle = lcm(
+            bounds[1] - bounds[0] + 1, bounds[3] - bounds[2] + 1
+        )
 
     def __getitem__(self, t):
+        t %= self.__cycle
         if t > self.__max_t:
             for T in range(self.__max_t, t + 1):
                 self.__blizzards[T + 1] = self.__step(self.__blizzards[T])
