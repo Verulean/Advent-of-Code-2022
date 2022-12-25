@@ -1,19 +1,18 @@
-class SNAFU:
-    __base = 5
-    __digits = {"=": -2, "-": -1, "0": 0, "1": 1, "2": 2}
-    __rev_digits = {v: k for k, v in __digits.items()}
+from collections import defaultdict
+from math import ceil, log
 
-    @staticmethod
-    def snafu2dec(n: str) -> int:
-        return sum(SNAFU.__digits[d] * SNAFU.__base ** p for p, d in enumerate(reversed(n)))
-    
-    @staticmethod
-    def dec2snafu(n: int) -> str:
-        ret = ""
-        while n:
-            ret += SNAFU.__rev_digits[(n + 2) % 5 - 2]
-            n //= SNAFU.__base
-        return ret[::-1]
 
 def solve(data):
-    return SNAFU.dec2snafu(sum(map(SNAFU.snafu2dec, data)))
+    s2d = {"=": -2, "-": -1, "0": 0, "1": 1, "2": 2}
+    d2s = {d: s for s, d in s2d.items()}
+    digits = defaultdict(int)
+    max_len = 0
+    for n in data:
+        max_len = max(max_len, len(n))
+        for i, c in enumerate(reversed(n)):
+            digits[i] += s2d[c]
+    for i in range(max_len + ceil(log(len(data), 5)) + 1):
+        q, r = divmod(digits[i] + 2, 5)
+        digits[i] = r - 2
+        digits[i + 1] += q
+    return "".join(d2s[d] for d in reversed(digits.values())).lstrip("0")
