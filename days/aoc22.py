@@ -75,11 +75,14 @@ class CyclicBoard:
         return INDEX_TO_DIRECTION[(DIRECTION_TO_INDEX[(di, dj)] + r) % 4]
 
     def next(self, i: int, j: int, di: int, dj: int) -> BoardState:
-        return self.__edges.get((i, j, di, dj), False) or (
-            i + di,
-            j + dj,
-            di,
-            dj,
+        return self.__edges.get(
+            (i, j, di, dj),
+            (
+                i + di,
+                j + dj,
+                di,
+                dj,
+            ),
         )
 
 
@@ -127,7 +130,7 @@ class MonkeyMap:
         )
 
     @staticmethod
-    def __get_min_span(seq: Iterable) -> int | None:
+    def __get_min_span(seq: Iterable) -> int:
         min_span = None
         i_start = None
         for i, elem in enumerate(seq):
@@ -142,7 +145,7 @@ class MonkeyMap:
             min_span = (
                 i - i_start + 1 if min_span is None else min(min_span, i - i_start + 1)
             )
-        return min_span
+        return min_span or 0
 
     @staticmethod
     def __get_starting_position(board: IntegerArray) -> IntegerPair:
