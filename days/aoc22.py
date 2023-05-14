@@ -6,18 +6,29 @@ import numpy as np
 import numpy.typing as npt
 import re
 
+
 fmt_dict = {"strip": False, "sep": "\n\n"}
-
-
-DIRECTION_TO_INDEX = {(0, 1): 0, (1, 0): 1, (0, -1): 2, (-1, 0): 3}
-INDEX_TO_DIRECTION = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-
 
 IntegerPair = tuple[int, int]
 IntegerArray = npt.NDArray[np.int_]
 BoardState = tuple[int, int, int, int]
 TileAdjacencyMap = dict[IntegerPair, dict[IntegerPair, tuple[int, int, int]]]
 BoardStateMap = dict[BoardState, BoardState]
+
+
+DIRECTION_TO_INDEX: dict[IntegerPair, int] = {
+    (0, 1): 0,
+    (1, 0): 1,
+    (0, -1): 2,
+    (-1, 0): 3,
+}
+
+INDEX_TO_DIRECTION: dict[int, IntegerPair] = {
+    0: (0, 1),
+    1: (1, 0),
+    2: (0, -1),
+    3: (-1, 0),
+}
 
 
 class CyclicBoard:
