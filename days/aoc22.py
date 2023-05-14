@@ -60,13 +60,13 @@ class CyclicBoard:
             for (di, dj), (i2, j2, r) in d.items():
                 r_i1, r_j1 = self.__get_ranges(i1, j1, di, dj)
                 r_i2, r_j2 = self.__get_ranges(
-                    i2, j2, *CyclicBoard.rotate(di, dj, 2 - r), reverse=True
+                    i2, j2, *CyclicBoard.rotate(di, dj, 2 + r), reverse=True
                 )
                 for x1, y1, x2, y2 in zip(r_i1, r_j1, r_i2, r_j2):
                     edges[(x1, y1, di, dj)] = (
                         x2,
                         y2,
-                        *CyclicBoard.rotate(di, dj, -r),
+                        *CyclicBoard.rotate(di, dj, r),
                     )
         return edges
 
@@ -196,14 +196,16 @@ class MonkeyMap:
                     else (dj * np.cross(n, u), u, dj * np.cross(v, u))
                 )
                 q.append((t2, *vectors))
-        for t, (n1, u1, v1) in info_by_tile.items():
+        for (i1, j1), (n1, u1, v1) in info_by_tile.items():
             for di, dj in DIRECTION_TO_INDEX:
                 n2 = di * u1 + dj * v1
-                (i, j), u2, v2 = info_by_normal[tuple(n2)]
+                (i2, j2), u2, v2 = info_by_normal[tuple(n2)]
+                if (i2, j2) == (i1 + di, j1 + dj):
+                    continue
                 R = get_rotation_matrix(n1, n2)
                 u1_t = R @ u1
-                r = [0, 0, 2][np.dot(u1_t, u2)] + np.dot(u1_t, v2)
-                adjs[t][di, dj] = i, j, r
+                r = [0, 0, -2][np.dot(u1_t, u2)] - np.dot(u1_t, v2)
+                adjs[(i1, j1)][di, dj] = i2, j2, r
         return adjs
 
     def __step(self, cyclic_board: CyclicBoard) -> bool:
